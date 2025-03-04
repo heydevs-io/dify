@@ -67,14 +67,11 @@ class AppGenerateService:
                 )
             elif app_model.mode == AppMode.ADVANCED_CHAT.value:
                 workflow = cls._get_workflow(app_model, invoke_from)
-                workflow_graph = json.loads(workflow.graph)
-                workflow_graph_nodes = update_llm_model_name(
-                    workflow_graph["nodes"],
+                workflow = cls.update_workflow_llm_model(
+                    workflow=workflow,
                     model_name=model_name,
                     model_provider=model_provider
                 )
-                workflow_graph["nodes"] = workflow_graph_nodes
-                workflow.graph = json.dumps(workflow_graph)
 
                 return rate_limit.generate(
                     AdvancedChatAppGenerator().generate(
@@ -173,6 +170,29 @@ class AppGenerateService:
             if not workflow:
                 raise ValueError("Workflow not published")
             
+        return workflow
+
+    @staticmethod
+    def update_workflow_llm_model(workflow: Workflow, model_name: str, model_provider: str) -> Workflow:
+        """
+        Update the model name and provider for all LLM nodes in the workflow.
+        
+        Args:
+            workflow (Workflow): The workflow to update
+            model_name (str): The new model name to set
+            model_provider (str): The new provider name to set
+            
+        Returns:
+            Workflow: Updated workflow with new model configuration
+        """
+        workflow_graph = json.loads(workflow.graph)
+        workflow_graph_nodes = update_llm_model_name(
+            workflow_graph["nodes"],
+            model_name=model_name,
+            model_provider=model_provider
+        )
+        workflow_graph["nodes"] = workflow_graph_nodes
+        workflow.graph = json.dumps(workflow_graph)
         return workflow
 
 def update_llm_model_name(workflow_graph_nodes: list, model_name: str = "gpt-4o-mini", model_provider: str = "openai") -> list:
