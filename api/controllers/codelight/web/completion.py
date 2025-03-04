@@ -40,8 +40,8 @@ class CodelightChatApi(WebApiResource):
         parser.add_argument("conversation_id", type=uuid_value, location="json")
         parser.add_argument("parent_message_id", type=uuid_value, required=False, location="json")
         parser.add_argument("retriever_from", type=str, required=False, default="web_app", location="json")
-        parser.add_argument("new_model_name", type=str, required=False, default="gpt-4o-mini", location="json")
-        parser.add_argument("new_provider", type=str, required=False, default="openai", location="json")
+        parser.add_argument("model_name", type=str, required=False, default="gpt-4o-mini", location="json")
+        parser.add_argument("model_provider", type=str, required=False, default="openai", location="json")
 
         args = parser.parse_args()
 
@@ -50,7 +50,7 @@ class CodelightChatApi(WebApiResource):
 
         try:
             response = AppGenerateService.generate(
-                app_model=app_model, user=end_user, args=args, invoke_from=InvokeFrom.WEB_APP, streaming=streaming, new_model_name=args["new_model_name"], new_provider=args["new_provider"]
+                app_model=app_model, user=end_user, args=args, invoke_from=InvokeFrom.WEB_APP, streaming=streaming, model_name=args["model_name"], model_provider=args["model_provider"]
             )
 
             return helper.compact_generate_response(response)
