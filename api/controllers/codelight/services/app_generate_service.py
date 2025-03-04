@@ -27,8 +27,8 @@ class AppGenerateService:
         args: Mapping[str, Any],
         invoke_from: InvokeFrom,
         streaming: bool = True,
-        new_model_name: str = 'gpt-4o-mini',
-        new_provider: str = 'openai',
+        model_name: str = 'gpt-4o-mini',
+        model_provider: str = 'openai',
     ):
         """
         App Content Generate
@@ -70,8 +70,8 @@ class AppGenerateService:
                 workflow_graph = json.loads(workflow.graph)
                 workflow_graph_nodes = update_llm_model_name(
                     workflow_graph["nodes"],
-                    new_model_name=new_model_name,
-                    new_provider=new_provider
+                    model_name=model_name,
+                    model_provider=model_provider
                 )
                 workflow_graph["nodes"] = workflow_graph_nodes
                 workflow.graph = json.dumps(workflow_graph)
@@ -175,7 +175,7 @@ class AppGenerateService:
             
         return workflow
 
-def update_llm_model_name(workflow_graph_nodes: list, new_model_name: str = "gpt-4o-mini", new_provider: str = "openai") -> list:
+def update_llm_model_name(workflow_graph_nodes: list, model_name: str = "gpt-4o-mini", model_provider: str = "openai") -> list:
     """
     Update the model name and provider for all LLM nodes in the workflow graph.
     
@@ -190,7 +190,7 @@ def update_llm_model_name(workflow_graph_nodes: list, new_model_name: str = "gpt
     for node in workflow_graph_nodes:
         if node["data"]["type"] == "llm":
             # Preserve existing model configuration, only update name and provider
-            node["data"]["model"]["name"] = new_model_name
-            node["data"]["model"]["provider"] = new_provider
+            node["data"]["model"]["name"] = model_name
+            node["data"]["model"]["provider"] = model_provider
             
     return workflow_graph_nodes
