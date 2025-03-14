@@ -76,3 +76,31 @@ def plugin_inner_api_only(view):
         return view(*args, **kwargs)
 
     return decorated
+
+#------------------------------------------------------------------------------
+# CODELIGHT_CUSTOMIZATION: Inner API authentication decorator
+# Version: 1.0.0
+# Author: Codelight - Lau Truong
+# Date: 2025-03-14
+#
+# Description: This decorator secures internal API endpoints by requiring
+# a valid Inner API key in the request headers. It first checks if the Inner
+# API feature is enabled in configuration, then validates the provided API key
+# against the configured value. This provides a secure communication channel
+# between Codelight components while preventing unauthorized access to
+# sensitive internal endpoints.
+#------------------------------------------------------------------------------
+def inner_api_only(view):
+    @wraps(view)
+    def decorated(*args, **kwargs):
+        if not dify_config.INNER_API:
+            abort(404)
+
+        # get header 'X-Inner-Api-Key'
+        inner_api_key = request.headers.get("X-Inner-Api-Key")
+        if not inner_api_key or inner_api_key != dify_config.INNER_API_KEY:
+            abort(401)
+
+        return view(*args, **kwargs)
+
+    return decorated

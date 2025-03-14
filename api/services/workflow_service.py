@@ -138,8 +138,21 @@ class WorkflowService:
         # fetch draft workflow by app_model
         workflow = self.get_draft_workflow(app_model=app_model)
 
-        if workflow and workflow.unique_hash != unique_hash:
-            raise WorkflowHashNotEqualError()
+        #------------------------------------------------------------------------------
+        # CODELIGHT_CUSTOMIZATION: Workflow hash validation (disabled)
+        # Version: 1.0.0
+        # Author: Codelight - Lau Truong
+        # Date: 2025-03-14
+        #
+        # Description: This code would validate that the workflow's unique hash matches
+        # the expected hash value. Currently disabled to allow more flexible workflow
+        # modifications in the Codelight implementation. When enabled, this would
+        # prevent unauthorized modifications to workflows by validating their integrity
+        # through hash comparison.
+        #------------------------------------------------------------------------------
+        # TODO: uncomment this for codelight usage
+        # if workflow and workflow.unique_hash != unique_hash:
+        #     raise WorkflowHashNotEqualError()
 
         # validate features structure
         self.validate_features_structure(app_model=app_model, features=features)

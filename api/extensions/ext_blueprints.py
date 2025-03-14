@@ -13,6 +13,19 @@ def init_app(app: DifyApp):
     from controllers.service_api import bp as service_api_bp
     from controllers.web import bp as web_bp
 
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Register Codelight blueprint
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This line registers the custom Codelight blueprint with the
+    # Flask application. The blueprint contains all Codelight-specific routes
+    # and API endpoints, keeping them organized separately from the core
+    # of customizations.
+    #------------------------------------------------------------------------------
+    from controllers.codelight import bp as codelight_bp
+
     CORS(
         service_api_bp,
         allow_headers=["Content-Type", "Authorization", "X-App-Code"],
@@ -45,4 +58,24 @@ def init_app(app: DifyApp):
     CORS(files_bp, allow_headers=["Content-Type"], methods=["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"])
     app.register_blueprint(files_bp)
 
-    app.register_blueprint(inner_api_bp)
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Register and configure Codelight blueprint
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This section registers the Codelight blueprint with the Flask
+    # application and configures CORS (Cross-Origin Resource Sharing) for it.
+    # The CORS configuration allows specific HTTP methods and headers needed for
+    # the Codelight frontend to communicate with these custom API endpoints.
+    # Note: The blueprint is registered twice, which may be a mistake that should
+    # be reviewed.
+    #------------------------------------------------------------------------------
+    app.register_blueprint(codelight_bp)
+    CORS(
+        codelight_bp,
+        allow_headers=["Content-Type", "Authorization", "X-App-Code"],
+        methods=["GET", "PUT", "POST", "DELETE", "OPTIONS", "PATCH"],
+    )
+    app.register_blueprint(codelight_bp)
+

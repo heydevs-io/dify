@@ -48,7 +48,25 @@ class Dataset(db.Model):  # type: ignore[name-defined]
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     provider = db.Column(db.String(255), nullable=False, server_default=db.text("'vendor'::character varying"))
-    permission = db.Column(db.String(255), nullable=False, server_default=db.text("'only_me'::character varying"))
+
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Modified team member access for knowledge initialization
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: 
+    # - Changed the team member access control when initializing 
+    # knowledge through the namespace API. 
+    # - This modification ensures all team
+    # members have proper access to the knowledge base during initialization
+    # rather than just the original limited subset.
+    # - This is change because of use-case of nimspace app
+    # - Change into all_team_members when init knowledge via nimspace api
+    # permission = db.Column(db.String(255), nullable=False, server_default=db.text("'only_me'::character varying")) # original
+    permission = db.Column(db.String(255), nullable=False, server_default=db.text("'all_team_members'::character varying")) # modified
+
+    #------------------------------------------------------------------------------
     data_source_type = db.Column(db.String(255))
     indexing_technique = db.Column(db.String(255), nullable=True)
     index_struct = db.Column(db.Text, nullable=True)

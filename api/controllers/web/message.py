@@ -177,8 +177,88 @@ class MessageSuggestedQuestionApi(WebApiResource):
 
         return {"data": questions}
 
+#------------------------------------------------------------------------------
+# CODELIGHT_CUSTOMIZATION: Added standard pagination API endpoint
+# Version: 1.0.0
+# Author: Codelight - Lau Truong
+# Date: 2025-03-14
+#
+# Description: This is a custom implementation added to the original project
+# to support traditional page-based pagination as an alternative
+# to the infinite scroll pagination in MessageListApi.
+#------------------------------------------------------------------------------
+class MessagePaginationApi(WebApiResource):
+    """Standard pagination API for retrieving messages by page number.
+    
+    This endpoint provides traditional page-based pagination for message retrieval,
+    returning a fixed number of messages per page along with metadata about
+    total count and whether more pages exist.
+    
+    Endpoints:
+        GET /messages/pagination
+        
+    Query Parameters:
+        conversation_id (uuid): ID of the conversation to retrieve messages from
+        page (int): Page number to retrieve (default: 1)
+        limit (int): Number of messages per page (default: 20)
+        
+    Returns:
+        dict: Pagination metadata and list of messages
+        
+    Raises:
+        NotChatAppError: If the app is not configured for chat
+        NotFound: If the specified conversation doesn't exist
+    """
+
+    message_fields = {
+        "id": fields.String,
+        "conversation_id": fields.String,
+        "inputs": fields.Raw,
+        "query": fields.String,
+        "answer": fields.String(attribute="re_sign_file_url_answer"),
+    }
+
+    message_pagination_fields = {
+        "page": fields.Integer,
+        "limit": fields.Integer,
+        "total": fields.Integer,
+        "has_more": fields.Boolean,
+        "data": fields.List(fields.Nested(message_fields)),
+    }
+
+    @marshal_with(message_pagination_fields)
+    def get(self, app_model, end_user):
+        app_mode = AppMode.value_of(app_model.mode)
+        if app_mode not in [AppMode.CHAT, AppMode.AGENT_CHAT, AppMode.ADVANCED_CHAT]:
+            raise NotChatAppError()
+
+        parser = reqparse.RequestParser()
+        parser.add_argument("conversation_id", required=True, type=uuid_value, location="args")
+        parser.add_argument("page", type=int, default=1, location="args")
+        parser.add_argument("limit", type=int, default=20, location="args")
+        args = parser.parse_args()
+
+        try:
+            messages, total_count = MessageService.pagination_by_page(
+                app_model, end_user, args["conversation_id"], args["page"], args["limit"]
+            )
+        except services.errors.conversation.ConversationNotExistsError:
+            raise NotFound("Conversation Not Exists.")
+
+        has_more = (args["page"] * args["limit"]) < total_count
+
+        return {
+            "page": args["page"],
+            "limit": args["limit"],
+            "total": total_count,
+            "has_more": has_more,
+            "data": messages,
+        }
 
 api.add_resource(MessageListApi, "/messages")
 api.add_resource(MessageFeedbackApi, "/messages/<uuid:message_id>/feedbacks")
 api.add_resource(MessageMoreLikeThisApi, "/messages/<uuid:message_id>/more-like-this")
 api.add_resource(MessageSuggestedQuestionApi, "/messages/<uuid:message_id>/suggested-questions")
+
+# CODELIGHT_CUSTOMIZATION: Added standard pagination API endpoint
+api.add_resource(MessagePaginationApi, "/messages/pagination")

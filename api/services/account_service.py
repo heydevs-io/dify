@@ -4,7 +4,7 @@ import logging
 import random
 import secrets
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from hashlib import sha256
 from typing import Any, Optional, cast
 
@@ -597,6 +597,36 @@ class TenantService:
         db.session.commit()
         return tenant
 
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Passwordless authentication method
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This method provides a simplified authentication flow that
+    # requires only an email address without password verification. It's designed
+    # for integration with external authentication systems where password
+    # verification has already been handled elsewhere. The method also handles
+    # account status updates, automatically activating pending accounts.
+    #------------------------------------------------------------------------------
+    @staticmethod
+    def authenticate_without_password(email: str) -> Account:
+        """Authenticate account with email only, without password"""
+        account = Account.query.filter_by(email=email).first()
+        if not account:
+            raise AccountLoginError("Account not found.")
+
+        if account.status == AccountStatus.BANNED.value or account.status == AccountStatus.CLOSED.value:
+            raise AccountLoginError("Account is banned or closed.")
+
+        if account.status == AccountStatus.PENDING.value:
+            account.status = AccountStatus.ACTIVE.value
+            account.initialized_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            db.session.commit()
+
+        return account
+
+
     @staticmethod
     def create_owner_tenant_if_not_exist(
         account: Account, name: Optional[str] = None, is_setup: Optional[bool] = False
@@ -830,6 +860,41 @@ class TenantService:
 
         return cast(dict, tenant.custom_config_dict)
 
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Add member to tenant functionality
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This method provides functionality to add an account as a member
+    # to a specific tenant with a designated role. It handles checking for existing
+    # memberships, updating roles if needed, and creating new memberships. This
+    # supports Codelight's enhanced team management capabilities.
+    #------------------------------------------------------------------------------
+    @staticmethod
+    def add_member_to_tenant(account_id: str, tenant_id: str, role: str = "normal") -> TenantAccountJoin:
+        """Add member to tenant"""
+        account = Account.query.get(account_id)
+        if not account:
+            raise ValueError("Account not found")
+
+        tenant = Tenant.query.get(tenant_id)
+        if not tenant:
+            raise ValueError("Tenant not found")
+
+        # Check if the account is already a member of the tenant
+        existing_join = TenantAccountJoin.query.filter_by(tenant_id=tenant.id, account_id=account.id).first()
+
+        if existing_join:
+            if existing_join.role == role:
+                raise AccountAlreadyInTenantError("Account is already a member of this tenant with the same role")
+            else:
+                existing_join.role = role
+                db.session.commit()
+                return existing_join
+
+        # Use the existing create_tenant_member method to add the member
+        return TenantService.create_tenant_member(tenant, account, role)
 
 class RegisterService:
     @classmethod

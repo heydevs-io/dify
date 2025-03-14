@@ -1,0 +1,62 @@
+name: "Production Deployment"
+
+on:
+  push:
+    branches:
+      - production
+
+env:
+  NAME: blox3-v1-prod
+  ZONE: asia-southeast1-a
+  SVC_NAME: dify-api-service
+  IMAGE_REPO: ${{ vars.ECR_URL }}/dify-api-service
+
+jobs:
+  build-deploy:
+    name: Build and deploy application to server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          token: ${{ secrets.MY_REPO_PAT_NEW }}
+
+      - name: Fetch latest changes
+        run: git fetch
+
+      - name: Checkout latest code
+        run: |
+          git fetch --all
+          git checkout -B production origin/production
+
+      - name: Log latest commit message
+        run: |
+          echo "Latest commit message:"
+          git log -1 --pretty=%B
+
+      - name: Build Docker
+        run: |
+          git log -1  # This will show the latest commit hash for verification
+          docker build -t ${{ env.IMAGE_REPO }}:latest ./api
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_NEW }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_NEW }}
+          aws-region: ap-southeast-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Upload to ECR
+        run: |
+          docker push ${{ env.IMAGE_REPO }}:latest
+
+      - name: Deploy to EKS
+        run: |
+          aws eks update-kubeconfig --region ap-southeast-1 --name eksBitcoin
+          kubectl rollout restart statefulset/dify-api -n nimspace-production
+          kubectl rollout restart statefulset/dify-worker -n nimspace-production

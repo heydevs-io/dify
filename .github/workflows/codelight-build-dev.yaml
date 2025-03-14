@@ -1,0 +1,55 @@
+name: "Dev Deployment"
+
+on:
+  push:
+    branches:
+      - feat/codelight
+
+env:
+  NAME: blox3-v1-prod
+  ZONE: asia-southeast1-a
+  SVC_NAME: dify-service
+
+jobs:
+  build-deploy:
+    name: Build and deploy application to server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          token: ${{ secrets.MY_REPO_PAT_NEW }}
+
+      - name: Fetch latest changes
+        run: git fetch
+
+      - name: Checkout latest code
+        run: |
+          git fetch --all
+          git checkout -B feat/codelight origin/feat/codelight
+
+      - name: Log latest commit message
+        run: |
+          echo "Latest commit message:"
+          git log -1 --pretty=%B
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.DEPLOY_SERVER }}
+          port: ${{ vars.SSH_PORT }}
+          username: ${{vars.SSH_USER}}
+          key: ${{ secrets.SSH_KEY }}
+
+          script: |
+            cd /home/ubuntu/ai-codelight/dify && git pull
+
+            docker compose -f /home/ubuntu/ai-codelight/dify/docker/docker-compose.yaml stop api || true
+            docker compose -f /home/ubuntu/ai-codelight/dify/docker/docker-compose.yaml stop worker || true
+
+            docker compose -f /home/ubuntu/ai-codelight/dify/docker/docker-compose.yaml rm -f api || true
+            docker-compose -f /home/ubuntu/ai-codelight/dify/docker/docker-compose.yaml rm -f worker || true
+
+            docker compose -f /home/ubuntu/ai-codelight/dify/docker/docker-compose.yaml up api --build -d
+            docker compose -f /home/ubuntu/ai-codelight/dify/docker/docker-compose.yaml up worker --build -d

@@ -1,6 +1,6 @@
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
-from typing import Optional, Union
+from typing import Optional, Union, List, Tuple
 
 from sqlalchemy import asc, desc, func, or_, select
 from sqlalchemy.orm import Session
@@ -166,3 +166,39 @@ class ConversationService:
         conversation.is_deleted = True
         conversation.updated_at = datetime.now(UTC).replace(tzinfo=None)
         db.session.commit()
+
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Add new pagination for conversations
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This method implements traditional page-based pagination for
+    # conversations, as an alternative to cursor-based pagination. It retrieves
+    # a specific page of conversations for a user (either Account or EndUser)
+    # with the specified page number and items per page. The method handles
+    # filtering based on user type and returns both the paginated results and
+    # the total count for UI display.
+    #------------------------------------------------------------------------------
+    @classmethod
+    def pagination_by_page(
+        cls,
+        app_model: App,
+        user: Optional[Union[Account, EndUser]],
+        page: int,
+        take: int,
+        invoke_from: InvokeFrom,
+    ) -> Tuple[List[Conversation], int]:
+        if not user:
+            return [], 0
+
+        base_query = db.session.query(Conversation).filter(
+            Conversation.is_deleted == False,
+            Conversation.app_id == app_model.id,
+            Conversation.from_source == ("api" if isinstance(user, EndUser) else "console"),
+            Conversation.from_end_user_id == (user.id if isinstance(user, EndUser) else None),
+            Conversation.from_account_id == (user.id if isinstance(user, Account) else None),
+            Conversation.invoke_from == invoke_from.value,
+        ).order_by(Conversation.updated_at.desc())
+
+        return db.paginate(base_query, page=page, per_page=take, error_out=False)

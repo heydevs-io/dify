@@ -839,6 +839,26 @@ class Conversation(db.Model):  # type: ignore[name-defined]
         return self.override_model_configs is not None
 
 
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Added property to retrieve end user name
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This property retrieves the name of the end user associated with
+    # the model instance. It performs a database lookup based on the from_end_user_id
+    # to get the user's name, which is needed for displaying user information in the
+    # Codelight UI components.
+    #------------------------------------------------------------------------------
+    @property
+    def from_end_user_name(self):
+        if self.from_end_user_id:
+            end_user = db.session.query(EndUser).filter(EndUser.id == self.from_end_user_id).first()
+            if end_user:
+                return end_user.name
+
+        return None
+
 class Message(db.Model):  # type: ignore[name-defined]
     __tablename__ = "messages"
     __table_args__ = (

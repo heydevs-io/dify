@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Union
+from typing import Optional, Union, List, Tuple
 
 from core.app.apps.advanced_chat.app_config_manager import AdvancedChatAppConfigManager
 from core.app.entities.app_invoke_entities import InvokeFrom
@@ -289,3 +289,50 @@ class MessageService:
         )
 
         return questions
+
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Message pagination by page number
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This method implements standard page-based pagination for
+    # retrieving messages within a conversation. It supports retrieving a specific
+    # page of messages with a defined number of items per page, calculating the
+    # appropriate offset. Messages are returned in chronological order (oldest first)
+    # along with the total count for UI pagination controls. This provides an
+    # alternative to the cursor-based pagination used in the original implementation.
+    #------------------------------------------------------------------------------
+    @classmethod
+    def pagination_by_page(
+        cls,
+        app_model: App,
+        user: Optional[Union[Account, EndUser]],
+        conversation_id: str,
+        page: int,
+        take: int,
+    ) -> Tuple[List[Message], int]:
+        if not user:
+            return [], 0
+
+        conversation = ConversationService.get_conversation(
+            app_model=app_model, user=user, conversation_id=conversation_id
+        )
+
+        offset = (page - 1) * take
+        messages = (
+            db.session.query(Message)
+            .filter(Message.conversation_id == conversation.id)
+            .order_by(Message.created_at.desc())
+            .offset(offset)
+            .limit(take)
+            .all()
+        )
+
+        total_count = (
+            db.session.query(Message)
+            .filter(Message.conversation_id == conversation.id)
+            .count()
+        )
+
+        return list(reversed(messages)), total_count

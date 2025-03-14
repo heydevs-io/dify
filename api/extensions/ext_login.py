@@ -17,7 +17,19 @@ login_manager = flask_login.LoginManager()
 @login_manager.request_loader
 def load_user_from_request(request_from_flask_login):
     """Load user based on the request."""
-    if request.blueprint not in {"console", "inner_api"}:
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Added Codelight API to exempt blueprints
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This condition includes the 'codelight_api' blueprint in the list
+    # of blueprints that are exempt from certain authentication or processing rules.
+    # By adding our custom blueprint to this list alongside the original 'console'
+    # and 'inner_api' blueprints, we ensure that Codelight API endpoints receive
+    # the same special handling as other system-level endpoints.
+    #------------------------------------------------------------------------------
+    if request.blueprint not in {"console", "inner_api", "codelight_api"}:
         return None
     # Check if the user_id contains a dot, indicating the old format
     auth_header = request.headers.get("Authorization", "")
