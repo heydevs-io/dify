@@ -71,7 +71,6 @@ def init_app(app: DifyApp):
     # Note: The blueprint is registered twice, which may be a mistake that should
     # be reviewed.
     #------------------------------------------------------------------------------
-    app.register_blueprint(codelight_bp)
     CORS(
         codelight_bp,
         allow_headers=["Content-Type", "Authorization", "X-App-Code"],

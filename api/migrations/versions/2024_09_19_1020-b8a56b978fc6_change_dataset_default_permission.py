@@ -11,12 +11,11 @@
 # requiring manual permission changes for each dataset.
 #------------------------------------------------------------------------------
 
-
 """change dataset default permission
 
 Revision ID: b8a56b978fc6
-Revises: 5511c782ee4c
-Create Date: 2025-03-14 10:20:24.453429
+Revises: 030f4915f36a
+Create Date: 2024-09-19 10:20:24.453429
 
 """
 import models as models
@@ -25,7 +24,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'b8a56b978fc6'
-down_revision = '5511c782ee4c'
+down_revision = '030f4915f36a'
 branch_labels = None
 depends_on = None
 
