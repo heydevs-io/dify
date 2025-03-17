@@ -1,3 +1,19 @@
+"""
+Codelight Chat API Controller
+
+This module is a modified version of the original completion.py file from the web controllers.
+Original source: api/controllers/web/completion.py
+
+Key modifications:
+- Customized for Codelight application
+- Added support for custom model selection (model_name and model_provider)
+- Modified error handling for Codelight-specific cases
+- Updated service calls to use Codelight's AppGenerateService
+
+It provides endpoints for processing chat messages with support for different app modes
+and streaming responses.
+"""
+
 import logging
 
 from flask_restful import reqparse
@@ -28,7 +44,6 @@ from services.errors.llm import InvokeRateLimitError
 class CodelightChatApi(WebApiResource):
     def post(self, app_model, end_user):
         app_mode = AppMode.value_of(app_model.mode)
-        
         if app_mode not in {AppMode.CHAT, AppMode.AGENT_CHAT, AppMode.ADVANCED_CHAT}:
             raise NotChatAppError()
 

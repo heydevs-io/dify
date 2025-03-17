@@ -67,14 +67,11 @@ class AppGenerateService:
                 )
             elif app_model.mode == AppMode.ADVANCED_CHAT.value:
                 workflow = cls._get_workflow(app_model, invoke_from)
-                workflow_graph = json.loads(workflow.graph)
-                workflow_graph_nodes = update_llm_model_name(
-                    workflow_graph["nodes"],
+                workflow = cls.update_workflow_llm_model(
+                    workflow=workflow,
                     model_name=model_name,
                     model_provider=model_provider
                 )
-                workflow_graph["nodes"] = workflow_graph_nodes
-                workflow.graph = json.dumps(workflow_graph)
 
                 return rate_limit.generate(
                     AdvancedChatAppGenerator().generate(
@@ -175,22 +172,23 @@ class AppGenerateService:
             
         return workflow
 
-def update_llm_model_name(workflow_graph_nodes: list, model_name: str = "gpt-4o-mini", model_provider: str = "openai") -> list:
-    """
-    Update the model name and provider for all LLM nodes in the workflow graph.
-    
-    Args:
-        workflow_graph (dict): The workflow graph data
-        new_model_name (str): The new model name to set
-        new_provider (str): The new provider name to set
+    @staticmethod
+    def update_workflow_llm_model(workflow: Workflow, model_name: str, model_provider: str) -> Workflow:
+        """
+        Update the model name and provider for all LLM nodes in the workflow.
         
-    Returns:
-        dict: Updated workflow graph
-    """
-    for node in workflow_graph_nodes:
-        if node["data"]["type"] == "llm":
-            # Preserve existing model configuration, only update name and provider
-            node["data"]["model"]["name"] = model_name
-            node["data"]["model"]["provider"] = model_provider
+        Args:
+            workflow (Workflow): The workflow to update
+            model_name (str): The new model name to set
+            model_provider (str): The new provider name to set
             
-    return workflow_graph_nodes
+        Returns:
+            Workflow: Updated workflow with new model configuration
+        """
+        workflow_graph = json.loads(workflow.graph)
+        for node in workflow_graph["nodes"]:
+            if node["data"]["type"] == "llm":
+                node["data"]["model"]["name"] = model_name
+                node["data"]["model"]["provider"] = model_provider
+        workflow.graph = json.dumps(workflow_graph)
+        return workflow
