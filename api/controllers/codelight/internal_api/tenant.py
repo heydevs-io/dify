@@ -8,6 +8,7 @@ from events.tenant_event import tenant_was_created
 from models.account import Account
 from services.account_service import TenantService
 from controllers.codelight import api
+from extensions.ext_database import db
 
 
 class CodelightTenantApi(Resource):
@@ -19,7 +20,7 @@ class CodelightTenantApi(Resource):
         parser.add_argument("owner_email", type=str, required=True, location="json")
         args = parser.parse_args()
 
-        account = Account.query.filter_by(email=args["owner_email"]).first()
+        account = db.session.query(Account).filter_by(email=args["owner_email"]).first()
         if account is None:
             return {"message": "owner account not found."}, 404
 
