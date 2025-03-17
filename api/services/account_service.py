@@ -80,6 +80,35 @@ class AccountService:
     LOGIN_MAX_ERROR_LIMITS = 5
     FORGOT_PASSWORD_MAX_ERROR_LIMITS = 5
 
+    #------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Passwordless authentication method
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-14
+    #
+    # Description: This method provides a simplified authentication flow that
+    # requires only an email address without password verification. It's designed
+    # for integration with external authentication systems where password
+    # verification has already been handled elsewhere. The method also handles
+    # account status updates, automatically activating pending accounts.
+    #------------------------------------------------------------------------------
+    @staticmethod
+    def authenticate_without_password(email: str) -> Account:
+        """Authenticate account with email only, without password"""
+        account = Account.query.filter_by(email=email).first()
+        if not account:
+            raise AccountLoginError("Account not found.")
+
+        if account.status == AccountStatus.BANNED.value or account.status == AccountStatus.CLOSED.value:
+            raise AccountLoginError("Account is banned or closed.")
+
+        if account.status == AccountStatus.PENDING.value:
+            account.status = AccountStatus.ACTIVE.value
+            account.initialized_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            db.session.commit()
+
+        return account
+
     @staticmethod
     def _get_refresh_token_key(refresh_token: str) -> str:
         return f"{REFRESH_TOKEN_PREFIX}{refresh_token}"
@@ -596,36 +625,6 @@ class TenantService:
         tenant.encrypt_public_key = generate_key_pair(tenant.id)
         db.session.commit()
         return tenant
-
-    #------------------------------------------------------------------------------
-    # CODELIGHT_CUSTOMIZATION: Passwordless authentication method
-    # Version: 1.0.0
-    # Author: Codelight - Lau Truong
-    # Date: 2025-03-14
-    #
-    # Description: This method provides a simplified authentication flow that
-    # requires only an email address without password verification. It's designed
-    # for integration with external authentication systems where password
-    # verification has already been handled elsewhere. The method also handles
-    # account status updates, automatically activating pending accounts.
-    #------------------------------------------------------------------------------
-    @staticmethod
-    def authenticate_without_password(email: str) -> Account:
-        """Authenticate account with email only, without password"""
-        account = Account.query.filter_by(email=email).first()
-        if not account:
-            raise AccountLoginError("Account not found.")
-
-        if account.status == AccountStatus.BANNED.value or account.status == AccountStatus.CLOSED.value:
-            raise AccountLoginError("Account is banned or closed.")
-
-        if account.status == AccountStatus.PENDING.value:
-            account.status = AccountStatus.ACTIVE.value
-            account.initialized_at = datetime.now(timezone.utc).replace(tzinfo=None)
-            db.session.commit()
-
-        return account
-
 
     @staticmethod
     def create_owner_tenant_if_not_exist(
