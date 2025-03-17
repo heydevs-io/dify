@@ -389,6 +389,26 @@ class InnerAPIConfig(BaseSettings):
         default=False,
     )
 
+    # ------------------------------------------------------------------------------
+    # CODELIGHT_CUSTOMIZATION: Inner API Authentication Decorator
+    # Version: 1.0.0
+    # Author: Codelight - Lau Truong
+    # Date: 2025-03-17
+    #
+    # Description:
+    # This decorator secures internal API endpoints by checking for a valid API key
+    # in request headers. Codelight maintains this functionality which was removed
+    # from the original Dify codebase.
+    #
+    # TODO: Refactor this implementation to align with Dify's current authentication
+    # patterns and remove dependency on the deprecated INNER_API_KEY configuration.
+    # because the Dify have already removed the INNER_API_KEY configuration.
+    # ------------------------------------------------------------------------------
+    INNER_API_KEY: Optional[str] = Field(
+        description="API key for accessing the internal API",
+        default=None,
+    )
+
 
 class LoggingConfig(BaseSettings):
     """
