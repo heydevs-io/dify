@@ -95,7 +95,7 @@ class AccountService:
     @staticmethod
     def authenticate_without_password(email: str) -> Account:
         """Authenticate account with email only, without password"""
-        account = Account.query.filter_by(email=email).first()
+        account = db.session.query(Account).filter_by(email=email).first()
         if not account:
             raise AccountLoginError("Account not found.")
 
