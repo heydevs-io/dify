@@ -873,7 +873,7 @@ class TenantService:
     @staticmethod
     def add_member_to_tenant(account_id: str, tenant_id: str, role: str = "normal") -> TenantAccountJoin:
         """Add member to tenant"""
-        account = Account.query.get(account_id)
+        account = db.session.query(Account).filter_by(id=account_id).first()
         if not account:
             raise ValueError("Account not found")
 

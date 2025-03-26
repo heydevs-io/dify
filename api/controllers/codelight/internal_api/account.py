@@ -25,6 +25,7 @@ class CodelightAccountAPI(Resource):
                 name=args["name"],
                 password=args["password"],
                 language=args["interface_language"],
+                is_setup=True,
             )
 
             current_app.logger.info(f"Account created: {account.id} - {account.name}")

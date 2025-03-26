@@ -24,7 +24,7 @@ class CodelightTenantApi(Resource):
         if account is None:
             return {"message": "owner account not found."}, 404
 
-        tenant = TenantService.create_tenant(args["name"])
+        tenant = TenantService.create_tenant(args["name"], is_setup=True)
         TenantService.create_tenant_member(tenant, account, role="owner")
 
         tenant_was_created.send(tenant)
