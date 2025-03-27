@@ -92,6 +92,13 @@ class CodelightDatasetListApi(Resource):
             type=_validate_name,
         )
         parser.add_argument(
+            "description",
+            nullable=False,
+            required=True,
+            help="Description cannot exceed 400 characters.",
+            type=_validate_description_length,
+        )
+        parser.add_argument(
             "indexing_technique",
             type=str,
             location="json",
@@ -109,6 +116,7 @@ class CodelightDatasetListApi(Resource):
             dataset = DatasetService.create_empty_dataset(
                 tenant_id=current_user.current_tenant_id,
                 name=args["name"],
+                description=args["description"],
                 indexing_technique=args["indexing_technique"],
                 account=current_user,
                 permission=DatasetPermissionEnum.ALL_TEAM,
